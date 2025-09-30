@@ -3,24 +3,9 @@ import streamlit as st
 import pickle
 import requests
 
-import os
-import requests
-
-# Google Drive direct download link
-url = "https://drive.google.com/uc?export=download&id=1N4TArX267fBEhAfxUd2JdRPxb5c9p2La"
-
-# Download similarity.pkl if it doesn't exist
-if not os.path.exists("similarity.pkl"):
-    print("Downloading similarity.pkl from Google Drive...")
-    r = requests.get(url, allow_redirects=True)
-    with open("similarity.pkl", "wb") as f:
-        f.write(r.content)
-    print("Download complete.")
-
 # ================= Fetch Poster + Extra Info ================= #
 def fetch_movie_details(movie_id, use_api=True):
     if not use_api:
-        # Fallback: return dummy values
         return (
             "https://via.placeholder.com/150",
             "Unknown Title",
@@ -30,11 +15,11 @@ def fetch_movie_details(movie_id, use_api=True):
 
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=212fdebc2c7095a2e4c3caa4780d903f&language=en-US"
     try:
-        response = requests.get(url, timeout=5)  # timeout added
+        response = requests.get(url, timeout=5)
         response.raise_for_status()
         data = response.json()
 
-        poster = "https://image.tmdb.org/t/p/w500" + data.get('poster_path', "")
+        poster = "https://image.tmdb.org/t/p/w500" + str(data.get('poster_path', ""))
         title = data.get("title", "Unknown Title")
         rating = data.get("vote_average", "N/A")
         overview = data.get("overview", "No description available.")
@@ -55,7 +40,6 @@ def recommend(movie1, use_api=True):
     for i in movies_list:
         movie_id = movie.iloc[i[0]].movie_id
         poster, title, rating, overview = fetch_movie_details(movie_id, use_api)
-        # fallback to local title if API fails
         if title in ["Unknown Title", "Timeout Error", "API Error"]:
             title = movie.iloc[i[0]].title
         recommended_movies.append({
@@ -69,12 +53,12 @@ def recommend(movie1, use_api=True):
 # ================= Load Data ================= #
 movie_dict = pickle.load(open('movies_dict.pkl','rb'))
 movie = pd.DataFrame(movie_dict)
-similarity = pickle.load(open('similarity.pkl','rb'))
+similarity = pickle.load(open('similarity.pkl','rb'))   # <-- Local file
 
 # ================= Streamlit UI ================= #
 st.set_page_config(page_title="🎬 Movie Recommender", layout="wide")
 
-# Custom CSS for styling
+# Custom CSS
 st.markdown("""
     <style>
     .main {
